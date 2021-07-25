@@ -161,15 +161,15 @@ class Generator(nn.Module):
         C = self.scft(V_r, V_s)
         Res_C = self.resblocks(C)
 
-        image_g = self.decoder(Res_C, feature_maps + [C])
-        return image_g
+        image_gen = self.decoder(Res_C, feature_maps + [C])
+        return image_gen
 
 
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
         self.layers = nn.Sequential(
-            ConvBlock2(3, 64, 4, 2, 1),
+            ConvBlock2(4, 64, 4, 2, 1),
             ConvBlock2(64, 128, 4, 2, 1),
             ConvBlock2(128, 256, 4, 2, 1),
             ConvBlock2(256, 512, 4, 1, 1),
