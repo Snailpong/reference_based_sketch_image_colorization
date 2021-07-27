@@ -1,6 +1,8 @@
 data
+__pycache__
 model
 result
 *.yaml
 crawl.py
 py_nope
+thinplate

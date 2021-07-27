@@ -1,5 +1,11 @@
 import torch
 import os
+import tqdm
+
+from torch.utils.data import DataLoader
+from torch import nn, optim
+
+from tqdm import tqdm
 
 from model import Generator, Discriminator
 from utils import init_device_seed, load_args
@@ -7,6 +13,7 @@ from dataset import Dataset
 from losses import VGGLoss
 
 
+BATCH_SIZE = 16
 W_ADV = 1
 W_REC = 30
 W_TR = 1
@@ -18,8 +25,8 @@ def train():
     args = load_args()
     device = init_device_seed(1234, args.cuda_visible)
 
-    # dataset = Dataset('./data/cartoon_dataset', ['color', 'sketch'])
-    # dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+    dataset = Dataset('./data/danbooru', ['color', 'sketch'])
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
     os.makedirs('./model', exist_ok=True)
 
@@ -29,7 +36,7 @@ def train():
 
     epoch = 0
 
-    if load_model:
+    if args.load_model:
         checkpoint = torch.load('./model/model_dict', map_location=device)
         generator.load_state_dict(checkpoint['generator_state_dict'])
         discriminator.load_state_dict(checkpoint['model_dict'])
