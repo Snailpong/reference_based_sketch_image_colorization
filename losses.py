@@ -24,8 +24,7 @@ class VGGLoss(torch.nn.Module):
         for i, block in enumerate(self.blocks):
             x = block(x)
             y = block(y)
-            if i in feature_layers:
-                loss_perc += torch.nn.functional.l1_loss(x, y)
+            loss_perc += torch.nn.functional.l1_loss(x, y)
         act_x = x.reshape(x.shape[0], x.shape[1], -1)
         act_y = y.reshape(y.shape[0], y.shape[1], -1)
         gram_x = act_x @ act_x.permute(0, 2, 1)

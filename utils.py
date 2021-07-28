@@ -25,6 +25,13 @@ def load_args():
     args = parser.parse_args()
     return args
 
+def load_args_test():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cuda_visible', default='0', help='set CUDA_VISIBLE_DEVICES')
+    parser.add_argument('--image_path', default='./data/val', help='set validation path')
+    args = parser.parse_args()
+    return args
+
 def appearnace_transformation(image):
     image[..., 0] += random.randint(-50, 50)
     image[..., 1] += random.randint(-50, 50)
@@ -36,6 +43,6 @@ def spatial_transformation(image):
     c_src = np.array([[0,0],[0,0.5],[0,1],[0.5,0],[0.5,0.5],[0.5,1],[1,0],[1,0.5],[1,1]])
     c_dst = np.clip(c_src + np.random.rand(9, 2) * 0.5 - 0.25, 0, 1)
     theta = tps.tps_theta_from_points(c_src, c_dst, reduced=True)
-    grid = tps.tps_grid(theta, c_dst, (512, 512))
+    grid = tps.tps_grid(theta, c_dst, (256, 256))
     mapx, mapy = tps.tps_grid_to_remap(grid, image.shape)
-    return cv2.remap(image, mapx, mapy, cv2.INTER_CUBIC)
+    return np.clip(cv2.remap(image, mapx, mapy, cv2.INTER_CUBIC), 0, 255)

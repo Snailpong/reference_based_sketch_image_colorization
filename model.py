@@ -56,7 +56,7 @@ class Resblocks(nn.Module):
 class Encoder(nn.Module):
     def __init__(self, channels_in):
         super(Encoder, self).__init__()
-        self.layers = [
+        self.layers = nn.ModuleList([
             ConvBlock(channels_in, 16, 1),
             ConvBlock(16, 16, 1),
             ConvBlock(16, 32, 2),
@@ -67,7 +67,7 @@ class Encoder(nn.Module):
             ConvBlock(128, 128, 1),
             ConvBlock(128, 256, 2),
             ConvBlock(256, 256, 1)
-        ]
+        ])
         self.pool = nn.AdaptiveAvgPool2d(output_size=(16, 16))
 
     def forward(self, x):
@@ -94,28 +94,29 @@ class Decoder(nn.Module):
     def __init__(self):
         super(Decoder, self).__init__()
         # [Block, cat_number]
-        self.layers = [
-            [ConvBlock(992 + 992, 256, 1), -1],
-            [ConvBlock(256, 256, 1), None],
-            [ConvBlock(256 + 128, 128, 1), 7],
-            [ConvBlock(128, 128, 1), None],
-            [ConvBlock(128 + 64, 64, 1), 5],
-            [ConvBlock(64, 64, 1), None],
-            [ConvBlock(64 + 32, 32, 1), 3],
-            [ConvBlock(32, 32, 1), None],
-            [ConvBlock(32 + 16, 16, 1), 1],
-            [ConvBlock(16, 16, 1), None],
-            [ConvBlock(16, 3, 1), None],
-        ]
+        self.layers = nn.ModuleList([
+            ConvBlock(992 + 992, 256, 1),
+            ConvBlock(256, 256, 1),
+            ConvBlock(256 + 128, 128, 1),
+            ConvBlock(128, 128, 1),
+            ConvBlock(128 + 64, 64, 1),
+            ConvBlock(64, 64, 1),
+            ConvBlock(64 + 32, 32, 1),
+            ConvBlock(32, 32, 1),
+            ConvBlock(32 + 16, 16, 1),
+            ConvBlock(16, 16, 1),
+            ConvBlock(16, 3, 1),
+        ])
+        self.concat_feature = [-1, None, 7, None, 5, None, 3, None, 1, None, None]
         self.tanh = nn.Tanh()
 
     def forward(self, x, features):
-        for block in self.layers:
-            if block[1] != None:
-                if block[1] != -1:
+        for i in range(11):
+            if self.concat_feature[i] != None:
+                if self.concat_feature[i] != -1:
                     x = F.interpolate(x, scale_factor=2, mode='bicubic', align_corners=False)
-                x = torch.cat([features[block[1]], x], dim=1)
-            x = block[0](x)
+                x = torch.cat([features[self.concat_feature[i]], x], dim=1)
+            x = self.layers[i](x)
 
         return self.tanh(x)
 

@@ -1,6 +1,7 @@
 import torch
 import os
 import tqdm
+import numpy as np
 
 from torch.utils.data import DataLoader
 from torch import nn, optim
@@ -32,7 +33,7 @@ def train():
 
     generator = Generator().to(device)
     discriminator = Discriminator().to(device)
-    vgg_loss = VGGLoss()
+    vgg_loss = VGGLoss().to(device)
 
     epoch = 0
 
@@ -68,10 +69,9 @@ def train():
 
             # Discriminator loss and update
             optimizer_disc.zero_grad()
-
-            image_gen = generator(img_photo).detach()
-            label_gen = discriminator(torch.cat([image_gen, image_s]), dim=1)
-            label_gt = discriminator(torch.cat([image_gt, image_s]), dim=1)
+            image_gen = generator(image_r, image_s).detach()
+            label_gen = discriminator(torch.cat([image_gen, image_s], dim=1))
+            label_gt = discriminator(torch.cat([image_gt, image_s], dim=1))
 
             loss_gen_disc = criterion_mse(label_gen, torch.zeros_like(label_gen))
             loss_gt_disc = criterion_mse(label_gt, torch.ones_like(label_gt))
@@ -82,15 +82,15 @@ def train():
 
             # Generator loss and update
             optimizer_gen.zero_grad()
-            image_gen = generator(img_photo).detach()
-            label_gen = discriminator(torch.cat([image_gen, image_s]), dim=1)
+            image_gen = generator(image_r, image_s).detach()
+            label_gen = discriminator(torch.cat([image_gen, image_s], dim=1))
 
             loss_rec = criterion_mae(image_gen, image_gt)
             loss_adv_gen = criterion_mse(label_gen, torch.ones_like(label_gen))
             loss_perc, loss_style = vgg_loss(image_gen, image_gt)
             loss_tr = .0
 
-            loss_gen = W_TR * loss_tr + W_REC * loss_rec + W_ADV * loss_adv_gen + W_PREC * loss_prec + W_STYLE * loss_style
+            loss_gen = W_TR * loss_tr + W_REC * loss_rec + W_ADV * loss_adv_gen + W_PERC * loss_perc + W_STYLE * loss_style
 
             loss_gen.backward()
             optimizer_gen.step()
@@ -98,8 +98,8 @@ def train():
 
             # Loss display
             total_loss_gen += W_ADV * loss_adv_gen.item()
-            total_loss_con += W_REC * loss_rec.item() + W_PREC * loss_prec.item() + W_STYLE * loss_style.item()
-            total_loss_tr += W_TR * loss_tr.item()
+            total_loss_con += W_REC * loss_rec.item() + W_PERC * loss_perc.item() + W_STYLE * loss_style.item()
+            # total_loss_tr += W_TR * loss_tr.item()
             total_loss_disc += loss_disc.item()
             pbar.set_postfix_str('G_GAN: {}, G_Content: {}, G_tr: {}, D: {}'.format(
                 np.around(total_loss_gen / (idx + 1), 4),
