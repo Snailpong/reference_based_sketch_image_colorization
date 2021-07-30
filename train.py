@@ -82,7 +82,7 @@ def train():
 
             # Generator loss and update
             optimizer_gen.zero_grad()
-            image_gen = generator(image_r, image_s).detach()
+            image_gen = generator(image_r, image_s)
             label_gen = discriminator(torch.cat([image_gen, image_s], dim=1))
 
             loss_rec = criterion_mae(image_gen, image_gt)

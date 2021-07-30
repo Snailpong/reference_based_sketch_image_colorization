@@ -17,6 +17,13 @@ class VGGLoss(torch.nn.Module):
                 p.requires_grad = False
         self.blocks = torch.nn.ModuleList(blocks)
 
+    def gram_matrix(self, input):
+        a, b, c, d = input.size()
+        features = input.view(a * b, c * d)
+        G = torch.mm(features, features.t())
+
+        return G.div(a * b * c * d)
+
     def forward(self, input, target):
         loss_perc = 0.0
         x = (input + 1) / 2
@@ -25,9 +32,7 @@ class VGGLoss(torch.nn.Module):
             x = block(x)
             y = block(y)
             loss_perc += torch.nn.functional.l1_loss(x, y)
-        act_x = x.reshape(x.shape[0], x.shape[1], -1)
-        act_y = y.reshape(y.shape[0], y.shape[1], -1)
-        gram_x = act_x @ act_x.permute(0, 2, 1)
-        gram_y = act_y @ act_y.permute(0, 2, 1)
+        gram_x = self.gram_matrix(x)
+        gram_y = self.gram_matrix(y)
         loss_style = torch.nn.functional.l1_loss(gram_x, gram_y)
         return loss_perc, loss_style
