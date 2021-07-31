@@ -22,7 +22,7 @@ def test():
     os.makedirs(output_dir, exist_ok=True)
 
     checkpoint = torch.load('./model/model_dict', map_location=device)
-    generator = Generator().to(device)
+    generator = Generator(is_train=False).to(device)
 
     generator.load_state_dict(checkpoint['generator_state_dict'])
     generator.eval()
@@ -45,9 +45,8 @@ def test():
         image_s = Image.open(f'{args.image_path}/sketch/{file_name}')
         image_r = torch.unsqueeze(to_tensor(image_r) * 2 - 1, 0).to(device)
         image_s = torch.unsqueeze(to_tensor(image_s) * 2 - 1, 0).to(device)
-        print(image_r.max(), image_s.max(), image_r.min(), image_s.min())
 
-        output = generator(image_r, image_s).detach().cpu()[0]
+        output = generator(image_r, image_s)[0].detach().cpu()[0]
         output = to_pil(output)
 
         output.save(f'{output_dir}/{file_name}.jpg')

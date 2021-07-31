@@ -36,3 +36,8 @@ class VGGLoss(torch.nn.Module):
         gram_y = self.gram_matrix(y)
         loss_style = torch.nn.functional.l1_loss(gram_x, gram_y)
         return loss_perc, loss_style
+
+
+def similarity_based_triplet_loss(dots, margin):
+    loss = torch.max(-dots[0] + dots[1] + margin, torch.zeros_like(dots[0]))
+    return torch.mean(loss)

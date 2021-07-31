@@ -11,7 +11,7 @@ from tqdm import tqdm
 from model import Generator, Discriminator
 from utils import init_device_seed, load_args
 from dataset import Dataset
-from losses import VGGLoss
+from losses import VGGLoss, similarity_based_triplet_loss
 
 
 BATCH_SIZE = 16
@@ -69,8 +69,8 @@ def train():
 
             # Discriminator loss and update
             optimizer_disc.zero_grad()
-            image_gen = generator(image_r, image_s).detach()
-            label_gen = discriminator(torch.cat([image_gen, image_s], dim=1))
+            image_gen, _ = generator(image_r, image_s)
+            label_gen = discriminator(torch.cat([image_gen.detach(), image_s], dim=1))
             label_gt = discriminator(torch.cat([image_gt, image_s], dim=1))
 
             loss_gen_disc = criterion_mse(label_gen, torch.zeros_like(label_gen))
@@ -82,13 +82,13 @@ def train():
 
             # Generator loss and update
             optimizer_gen.zero_grad()
-            image_gen = generator(image_r, image_s)
+            image_gen, dots = generator(image_r, image_s)
             label_gen = discriminator(torch.cat([image_gen, image_s], dim=1))
 
             loss_rec = criterion_mae(image_gen, image_gt)
             loss_adv_gen = criterion_mse(label_gen, torch.ones_like(label_gen))
             loss_perc, loss_style = vgg_loss(image_gen, image_gt)
-            loss_tr = .0
+            loss_tr = similarity_based_triplet_loss(dots, MARGIN_TR)
 
             loss_gen = W_TR * loss_tr + W_REC * loss_rec + W_ADV * loss_adv_gen + W_PERC * loss_perc + W_STYLE * loss_style
 
@@ -99,7 +99,7 @@ def train():
             # Loss display
             total_loss_gen += W_ADV * loss_adv_gen.item()
             total_loss_con += W_REC * loss_rec.item() + W_PERC * loss_perc.item() + W_STYLE * loss_style.item()
-            # total_loss_tr += W_TR * loss_tr.item()
+            total_loss_tr += W_TR * loss_tr.item()
             total_loss_disc += loss_disc.item()
             pbar.set_postfix_str('G_GAN: {}, G_Content: {}, G_tr: {}, D: {}'.format(
                 np.around(total_loss_gen / (idx + 1), 4),

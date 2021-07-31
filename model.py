@@ -122,13 +122,14 @@ class Decoder(nn.Module):
 
 
 class SCFT_Module(nn.Module):
-    def __init__(self):
+    def __init__(self, is_train):
         super(SCFT_Module, self).__init__()
         self.d_v = 992
         self.W_v = nn.Linear(self.d_v, self.d_v, bias=False)
         self.W_k = nn.Linear(self.d_v, self.d_v, bias=False)
         self.W_q = nn.Linear(self.d_v, self.d_v, bias=False)
         self.softmax = nn.Softmax(dim=2)
+        self.is_train = is_train
 
     def forward(self, V_r, V_s):
         batchs, d_v, h, w = V_r.size()
@@ -139,31 +140,37 @@ class SCFT_Module(nn.Module):
         W_k_V_r = self.W_k(V_r)
         W_q_V_s = self.W_q(V_s)
 
-        dot = torch.bmm(W_q_V_s, W_k_V_r.permute(0, 2, 1))   # (batchs, 256, 256)
-        attention_matrix = self.softmax(dot / math.sqrt(self.d_v))
+        dot = torch.bmm(W_q_V_s, W_k_V_r.permute(0, 2, 1)) / math.sqrt(self.d_v)  # (batchs, 256, 256)
+        attention_matrix = self.softmax(dot)
         V_star = torch.bmm(attention_matrix, W_v_V_r)
-        
         C = (V_star + V_s).reshape(batchs, d_v, h, w)
-        return C
+
+        if self.is_train:
+            neg_sample = torch.cat([torch.arange(1, batchs), torch.tensor([0])])
+            W_v_V_r_neg = W_v_V_r[neg_sample]
+            dot_neg = torch.bmm(W_q_V_s, W_v_V_r_neg.permute(0, 2, 1)) / math.sqrt(self.d_v)
+            return C, [dot, dot_neg]
+
+        return C, None
 
 
 class Generator(nn.Module):
-    def __init__(self):
+    def __init__(self, is_train=True):
         super(Generator, self).__init__()
         self.encoder_r = Encoder(3)
         self.encoder_s = Encoder(1)
-        self.scft = SCFT_Module()
+        self.scft = SCFT_Module(is_train)
         self.resblocks = Resblocks()
         self.decoder= Decoder()
 
     def forward(self, image_r, image_s):
         V_r, _ = self.encoder_r(image_r)
         V_s, feature_maps = self.encoder_s(image_s)
-        C = self.scft(V_r, V_s)
+        C, dots = self.scft(V_r, V_s)
         Res_C = self.resblocks(C)
 
         image_gen = self.decoder(Res_C, feature_maps + [C])
-        return image_gen
+        return image_gen, dots
 
 
 class Discriminator(nn.Module):
