@@ -40,7 +40,7 @@ def train():
     if args.load_model:
         checkpoint = torch.load('./model/model_dict', map_location=device)
         generator.load_state_dict(checkpoint['generator_state_dict'])
-        discriminator.load_state_dict(checkpoint['model_dict'])
+        discriminator.load_state_dict(checkpoint['discriminator_state_dict'])
         epoch = checkpoint['epoch']
 
     optimizer_gen = optim.Adam(generator.parameters(), lr=1e-4, betas=(0.5, 0.999))
@@ -49,7 +49,7 @@ def train():
     criterion_mae = nn.L1Loss()
     criterion_mse = nn.MSELoss()
 
-    while epoch <= 100:
+    while epoch < 100:
         epoch += 1
 
         generator.train()

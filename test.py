@@ -49,7 +49,7 @@ def test():
         output = generator(image_r, image_s)[0].detach().cpu()[0]
         output = to_pil(output)
 
-        output.save(f'{output_dir}/{file_name}.jpg')
+        output.save(f'{output_dir}/{file_name}')
 
 if __name__ == '__main__':
     test()
