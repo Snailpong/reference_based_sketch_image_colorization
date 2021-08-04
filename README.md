@@ -133,7 +133,7 @@ if __name__ == '__main__':
 </tr>
 <tr>
 <td><img src="https://user-images.githubusercontent.com/11583179/128166075-0604b085-621e-44fb-b5ec-3c2f73df9dc8.jpg"></td>
-<td><img src="https://user-images.githubusercontent.com/11583179/128167560-9e75a3cf-fda7-4f55-8f8f-7138e372fcb9.jpg"></td>
+<td><img src="https://user-images.githubusercontent.com/11583179/128190929-ae8cd35b-7b08-4584-86c2-caa0e765f954.png"></td>
 <td><img src="https://user-images.githubusercontent.com/11583179/128172120-f1364947-488b-4c7d-bcfa-54c602d62c30.png"></td>
 </tr>
 
@@ -146,7 +146,7 @@ if __name__ == '__main__':
 - In Eq. (9), since <img src="https://render.githubusercontent.com/render/math?math=l"> is unclear in contrast to Eq. (8), I computed style (gram) loss with ```relu5_1``` activation map.
 - In this experiment, there was little difference in quality with or without the similarity-based triplet loss. After convergence from 20 to 0 from 1 epoch, there was little change.
 - When the test image was predicted every 1 epoch after the content loss was converged, the color quality difference was remarkable.
-- The converged adversarial losses of the generator and discriminator were 0.7~0.8 and 0.15~0.2, respectively.
+- The converged adversarial losses of the generator and discriminator were 0.7 ~ 0.8 and 0.15 ~ 0.2, respectively.
 
 
 ## Code Reference
